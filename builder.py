@@ -96,5 +96,7 @@ def get_segmentation_dataset(flags):
     return datasets.get_scannet_dataset(flags)
   elif flags.name.lower() == 'kitti':
     return datasets.get_kitti_dataset(flags)
+  elif flags.name.lower() == 'urbanbis':
+    return datasets.get_urbanbis_dataset(flags)
   else:
     raise ValueError

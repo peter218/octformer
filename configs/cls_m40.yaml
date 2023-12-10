@@ -6,7 +6,7 @@
 # --------------------------------------------------------
 
 SOLVER:
-  gpu: 0,
+  gpu: 8,
   run: train
   type: adamw
   best_val: max:accu

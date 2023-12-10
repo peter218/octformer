@@ -5,6 +5,7 @@
 # Written by Peng-Shuai Wang
 # --------------------------------------------------------
 
-from .modelnet40 import get_modelnet40_dataset
-from .scannet import get_scannet_dataset
+# from .modelnet40 import get_modelnet40_dataset
+# from .scannet import get_scannet_dataset
+from .urbanbis import get_urbanbis_dataset
 

@@ -8,7 +8,7 @@
 import ocnn
 import numpy as np
 from plyfile import PlyData
-
+import torch
 
 class ReadPly:
 
@@ -57,17 +57,35 @@ class ReadNpz:
     if self.has_label:
       output['labels'] = raw['labels'].astype(np.int32)
     return output
+class ReadPTH:
 
+  def __init__(self, has_normal: bool = False, has_color: bool = True,
+               has_label: bool = True):
+    self.has_normal = has_normal
+    self.has_color = has_color
+    self.has_label = has_label
+
+  def __call__(self, filename: str):
+    raw = torch.load(filename)
+
+    output = dict()
+    output['points'] = raw[0].astype(np.float32)
+    if self.has_color:
+      output['colors'] = raw[1].astype(np.float32)
+    if self.has_label:
+      output['labels'] = raw[2].astype(np.int32)
+    return output
 
 class ReadFile:
 
-  def __init__(self, has_normal: bool = True, has_color: bool = False,
-               has_label: bool = False):
+  def __init__(self, has_normal: bool = False, has_color: bool = True,
+               has_label: bool = True):
     self.read_npz = ReadNpz(has_normal, has_color, has_label)
     self.read_ply = ReadPly(has_normal, has_color, has_label)
+    self.read_pth = ReadPTH(has_normal, has_color, has_label)
 
   def __call__(self, filename: str):
-    func = {'npz': self.read_npz, 'ply': self.read_ply}
+    func = {'npz': self.read_npz, 'ply': self.read_ply, 'pth': self.read_pth}
     suffix = filename.split('.')[-1]
     return func[suffix](filename)
 

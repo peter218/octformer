@@ -23,6 +23,7 @@ from .utils import ReadFile, Transform
 def color_distort(color, trans_range_ratio, jitter_std):
 
   def _color_autocontrast(color):
+    
     assert color.shape[1] >= 3
     lo = color[:, :3].min(0, keepdims=True)
     hi = color[:, :3].max(0, keepdims=True)
@@ -114,7 +115,7 @@ def rand_crop(points: Points, max_npt: int):
   return points, crop_mask
 
 
-class ScanNetTransform(Transform):
+class UrbanbisTransform(Transform):
 
   def __init__(self, flags):
     super().__init__(flags)
@@ -130,7 +131,7 @@ class ScanNetTransform(Transform):
         [[0.05, 0.1], [0.1, 0.2], [0.2, 0.4], [0.4, 0.8]], np.float32)
 
   def __call__(self, sample, idx=None):
-
+    
     # normalize points
     xyz = sample['points']
     center = (xyz.min(axis=0) + xyz.max(axis=0)) / 2.0
@@ -141,12 +142,14 @@ class ScanNetTransform(Transform):
 
     # data augmentation specific to scannet
     if self.flags.distort:
-      color = color_distort(color, self.color_trans_ratio, self.color_jit_std)
+      color = color_distort(sample['colors'], self.color_trans_ratio, self.color_jit_std)
       xyz = elastic_distort(xyz, self.elastic_params)
 
     # construct points
-    points = Points(torch.from_numpy(xyz), torch.from_numpy(sample['normals']),
-                    torch.from_numpy(color), torch.from_numpy(sample['labels']))
+    # points = Points(torch.from_numpy(xyz), torch.from_numpy(sample['normals']),
+    #                 features=torch.from_numpy(color), labels=torch.from_numpy(sample['label']))
+    points = Points(torch.from_numpy(xyz),
+                    features=torch.from_numpy(color), labels=torch.from_numpy(sample['label']))
 
     # transform provided by `ocnn`,
     # including rotatation, translation, scaling, and flipping
@@ -161,7 +164,7 @@ class ScanNetTransform(Transform):
       inbox_mask[inbox_mask.clone()] = crop_mask   # update inbox_mask
 
     # align z
-    points = align_z(points)
+    # points = align_z(points)
     return {'points': points, 'inbox_mask': inbox_mask}
 
 
@@ -217,11 +220,11 @@ class CollateBatch:
     return outputs
   
 
-def get_scannet_dataset(flags):
-  transform = ScanNetTransform(flags)
-  read_file = ReadFile(has_normal=True, has_color=True, has_label=True)
+def get_urbanbis_dataset(flags):
+  transform = UrbanbisTransform(flags)
+  read_file = ReadFile(has_normal=False, has_color=True, has_label=True)
   collate_batch = CollateBatch(flags.cutmix)
-
-  dataset = Dataset(flags.location, flags.filelist, transform,
-                    read_file=read_file)
+  dataset = Dataset(root='/home/ubuntu/lhyCODE/octformer/data/urbanbis/qingdao/train', transform=transform)
+  # dataset = Dataset(flags.location, flags.filelist, transform,
+  #                   read_file=read_file)
   return dataset, collate_batch
